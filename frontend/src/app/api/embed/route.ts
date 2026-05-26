@@ -1,19 +1,4 @@
 import { NextResponse } from 'next/server';
-import { pipeline } from '@xenova/transformers';
-
-// Singleton to avoid loading the model multiple times
-class PipelineSingleton {
-  static task = 'feature-extraction';
-  static model = 'Xenova/all-MiniLM-L6-v2';
-  static instance: any = null;
-
-  static async getInstance(progress_callback = null) {
-    if (this.instance === null) {
-      this.instance = pipeline(this.task, this.model, { progress_callback });
-    }
-    return this.instance;
-  }
-}
 
 export async function POST(request: Request) {
   try {
@@ -23,18 +8,35 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing text parameter' }, { status: 400 });
     }
 
-    // Get the pipeline instance
-    const extractor = await PipelineSingleton.getInstance();
+    // Quy tắc định dạng chuỗi truy vấn bắt buộc của Nomic Embed v1.5
+    const formattedInput = `search_query: ${text}`;
 
-    // Extract the embedding
-    const output = await extractor(text, { pooling: 'mean', normalize: true });
-    
-    // Convert Float32Array to standard JS Array
-    const embedding = Array.from(output.data);
+    // Gọi trực tiếp đến Local API Server của LM Studio đang mở ở cổng 1234
+    const lmStudioResponse = await fetch("http://localhost:1234/v1/embeddings", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "text-embedding-nomic-embed-text-v1.5",
+        input: formattedInput,
+      }),
+    });
+
+    if (!lmStudioResponse.ok) {
+      const errorText = await lmStudioResponse.text();
+      throw new Error(`LM Studio API Error: ${errorText}`);
+    }
+
+    const result = await lmStudioResponse.json();
+
+    // Trích xuất mảng số thực chứa đúng 768 phần tử từ cấu trúc JSON của LM Studio
+    const embedding = result.data[0].embedding;
 
     return NextResponse.json({ embedding });
   } catch (error: any) {
     console.error("Embedding generation error:", error);
-    return NextResponse.json({ error: error.message || 'Error generating embedding' }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message || 'Error generating embedding' },
+      { status: 500 }
+    );
   }
 }

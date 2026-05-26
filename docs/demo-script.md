@@ -48,7 +48,7 @@ Trong suốt buổi trình diễn, hãy sử dụng 2 tài khoản sau để min
    - Gõ cụm từ: `"gõ êm tay"` hoặc `"tập trung làm việc"`.
    - Kết quả: AI tự hiểu "gõ êm tay" thì cần **Mechanical Keyboard** (Bàn phím cơ), "tập trung" thì cần **Noise Cancelling Headphones** (Tai nghe chống ồn).
 6. **Điểm nhấn chốt hạ (Kỹ thuật):** 
-   - Giải thích cho thầy: *"Dữ liệu văn bản được đẩy qua mô hình AI `Xenova/all-MiniLM-L6-v2` ngay trên server cục bộ để biến đổi thành một mảng 384 chiều (Vector). Sau đó, CSDL PostgreSQL sử dụng thuật toán siêu tốc HNSW của extension `pgvector` để quét và tính khoảng cách Cosine Similarity. Việc này giúp hệ thống tìm kiếm thông minh như ChatGPT nhưng hoàn toàn bảo mật ngay trong Database của mình!"*
+    - Giải thích cho thầy: *"Dữ liệu văn bản được gửi sang máy chủ AI cục bộ LM Studio chạy mô hình Nomic Embed v1.5 để biến đổi thành một mảng 768 chiều (Vector) có gắn tiền tố 'search_query: '. Sau đó, CSDL PostgreSQL sử dụng thuật toán siêu tốc HNSW của extension `pgvector` để quét và tính khoảng cách Cosine Similarity. Việc này giúp hệ thống tìm kiếm thông minh vượt trội, hỗ trợ ngữ nghĩa tiếng Việt tốt hơn rất nhiều và hoàn toàn bảo mật ngay trên hệ thống của mình!"*
 ## Bước 5: Hiệu năng & Đo kiểm (Benchmarking)
 1. Mở trang **Benchmark**.
 2. Chạy một truy vấn phức tạp (ví dụ: tổng hợp 10,000 bản ghi JSONB).

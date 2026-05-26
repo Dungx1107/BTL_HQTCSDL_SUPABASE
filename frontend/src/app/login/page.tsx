@@ -66,12 +66,13 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
     console.log("[Auth] Initiating Google OAuth login...");
-    
+
     try {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          // redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: 'http://localhost:3000/auth/callback',
         }
       });
 

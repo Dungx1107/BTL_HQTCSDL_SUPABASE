@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Search, BrainCircuit, Loader2, FileText, Settings } from "lucide-react";
 
 interface SearchResult {
-  id: string;
+  id: string; // Hoặc number tùy thuộc vào kiểu dữ liệu trong DB
   title: string;
   content: string;
   similarity: number;
@@ -26,40 +26,72 @@ export default function AISearchPage() {
     setLoading(true);
     setError(null);
 
+    console.log("=== BẮT ĐẦU TIẾN TRÌNH TÌM KIẾM NGỮ NGHĨA ===");
+    console.log("Từ khóa tìm kiếm (Query):", query);
+
     try {
-      // 1. Generate the embedding locally using Next.js API Route (which runs Xenova/all-MiniLM-L6-v2)
+      // 1. Gọi API Route Next.js để lấy vector từ LM Studio
+      console.log("1. Đang gửi request đến /api/embed...");
       const embeddingResponse = await fetch('/api/embed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: query })
       });
-      
-      const { embedding, error: embedError } = await embeddingResponse.json();
-      
-      if (embedError) {
-        throw new Error(embedError);
+
+      const embedResult = await embeddingResponse.json();
+      console.log("Phản hồi thô từ /api/embed:", embedResult);
+
+      if (embedResult.error) {
+        throw new Error(`Lỗi sinh Embedding: ${embedResult.error}`);
       }
 
-      // 2. Call the pgvector semantic search function in Postgres
+      const { embedding } = embedResult;
+      console.log("-> Lấy Vector thành công. Kích thước (Dimensions):", embedding?.length);
+
+      // 2. Gọi hàm pgvector match_documents trong Postgres
+      console.log("2. Đang thực thi RPC match_documents trên Supabase...");
+      console.log("Tham số truyền vào RPC:", {
+        query_embedding_length: embedding?.length,
+        match_threshold: 0.1,
+        match_count: 5
+      });
+
       const { data, error: rpcError } = await supabase.rpc("match_documents", {
-        query_embedding: embedding, // This is now a 384d vector
-        match_threshold: 0.1, // Adjusted threshold
+        query_embedding: embedding,
+        match_threshold: 0.1,
         match_count: 5,
       });
 
       if (rpcError) {
+        console.error("❌ Lỗi RPC trả về từ Supabase Database:", rpcError);
+        console.error("Mã lỗi (Code):", rpcError.code);
+        console.error("Chi tiết (Details):", rpcError.details);
+        console.error("Gợi ý (Hint):", rpcError.hint);
         throw rpcError;
       }
 
+      console.log("3. Dữ liệu nhận được thành công từ RPC:", data);
+      if (data && data.length > 0) {
+        console.log("Cấu trúc của bản ghi đầu tiên để kiểm tra kiểu dữ liệu:", {
+          id_type: typeof data[0].id,
+          title_type: typeof data[0].title,
+          content_type: typeof data[0].content,
+          similarity_type: typeof data[0].similarity,
+          keys: Object.keys(data[0])
+        });
+      }
+
       setResults(data || []);
-      
+
       if (!data || data.length === 0) {
         setError("Không tìm thấy kết quả phù hợp. Hãy chắc chắn rằng bạn đã chạy script `seed-vectors.js` để nạp dữ liệu.");
       }
     } catch (err: any) {
+      console.error("❌ Luồng xử lý catch ngoại lệ (Exception Caught):", err);
       setError(err.message || "An error occurred during semantic search.");
     } finally {
       setLoading(false);
+      console.log("=== KẾT THÚC TIẾN TRÌNH TÌM KIẾM ===");
     }
   };
 

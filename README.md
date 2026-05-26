@@ -65,6 +65,7 @@
 - Cài đặt **Java JDK 21**.
 - Cài đặt **Docker Desktop** (Phải đang chạy).
 - Cài đặt **Supabase CLI** (`npm install -g supabase`).
+- Cài đặt **LM Studio** và tải mô hình **Nomic Embed v1.5** (Khởi chạy Local Server ở cổng `1234`).
 
 ### Bước 1: Khởi động Database (Supabase Local)
 Mở terminal tại thư mục gốc `Supabase-Ultimate-Showcase`:
@@ -74,11 +75,14 @@ npx supabase start
 *Lệnh này sẽ tải các Docker container cần thiết và thiết lập Database cùng các dữ liệu mẫu (Seed Data).*
 *Lưu lại thông tin `API URL` và `anon key` xuất ra trên màn hình.*
 
-### Bước 2: Khởi động Frontend
-Cập nhật biến môi trường `.env.local` ở thư mục `frontend` bằng các Key có được từ Bước 1. Sau đó chạy:
+### Bước 2: Khởi động Frontend & Nạp dữ liệu Vector AI
+1. Cập nhật biến môi trường `.env.local` ở thư mục `frontend` bằng các Key có được từ Bước 1.
+2. Khởi chạy ứng dụng **LM Studio**, nạp mô hình `nomic-embed-text-v1.5` đã tải và bấm **Start Server** ở cổng `1234`.
+3. Chạy các lệnh cài đặt, nạp dữ liệu nền và khởi động Server Frontend:
 ```bash
 cd frontend
 npm install
+node scripts/seed-vectors.js # Sinh vector 768 chiều và nạp dữ liệu mẫu
 npm run dev
 ```
 Truy cập: `http://localhost:3000`
